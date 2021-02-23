@@ -1,0 +1,64 @@
+version: '3'
+services:
+  
+  mariadb:
+    build: mariadb/.
+    volumes:
+      - db_data:/var/lib/mariadb
+      - ./mariadb/init:/docker-entrypoint-initdb.d
+    restart: always
+    ports:
+      - "8085:3306"
+    environment: 
+      MYSQL_ROOT_PASSWORD: monPassword
+      MYSQL_DATABASE: video
+      MYSQL_USER: user
+      MYSQL_PASSWORD: pwd
+    networks:
+      - backend
+
+  apache:
+    depends_on: 
+      - mariadb
+    build: apache/.
+    volumes: 
+      - ./apache/public-html:/usr/local/apache2/htdocs
+      - /mnt/e/Media/Video/:/usr/local/apache2/htdocs/media
+    ports:
+      - "8080:80"
+    restart: always
+    networks:
+      - backend
+
+  python:
+    depends_on: 
+      - mariadb
+    build: python/.
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./python:/usr/src/app
+      - /mnt/e/Media/Video/:/usr/src/app/media
+    networks:
+      - backend
+    environment:
+      PYTHONUNBUFFERED: 0
+
+  scriptjs:
+    depends_on:
+      - apache
+    build: scriptjs/.
+    volumes: 
+      - ./scriptjs/node_modules:/usr/local/apache2/htdocs
+    ports:
+      - "8090:90"
+    restart: always
+    networks:
+      - backend
+
+networks:
+  backend:
+    name: backend
+
+volumes:
+  db_data: {}
