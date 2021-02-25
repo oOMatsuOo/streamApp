@@ -18,7 +18,7 @@ def update_all():
 
 def update_serie(db_connection):
 
-    serie_entity            = SerieFileEntity(db_connection.connection)
+    serie_entity = SerieFileEntity(db_connection.connection)
 
 
     path = 'media/Series'
@@ -29,6 +29,7 @@ def update_serie(db_connection):
         serie_hashcode = get_dir_hashcode(full_path)
 
         serie_file = File(serie, serie_hashcode)
+        print(serie_file)
 
         if not serie_entity.serie_file_exists_by_hashcode(serie_file) :
             serie_entity.insert_serie_file(serie_file)
@@ -99,6 +100,7 @@ def update_movies(db_connection):
         full_path = find_file(movie, path)
         movie_hashcode = get_file_hashcode(full_path)
         movie_file = File(movie, movie_hashcode)
+        print(movie_file)
 
         if not movie_file_entity.movie_file_exists_by_hashcode(movie_file) :
             movie_name = get_file_name(movie)
