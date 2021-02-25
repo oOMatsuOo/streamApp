@@ -19,7 +19,7 @@ class dbConnect:
         conn = mariadb.connect(
             user="user",
             password="pwd",
-            host="mariadb_mariadb_1",
+            host="streamapp_mariadb_1",
             database="video"
         )
 
