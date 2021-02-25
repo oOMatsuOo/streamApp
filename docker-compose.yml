@@ -49,7 +49,7 @@ services:
       - mariadb
     build: daemon/.
     volumes:
-      - ./python:/usr/src/app
+      - ./daemon:/usr/src/app
       - /mnt/e/Media/Video/:/usr/src/app/media
     networks:
       - backend
