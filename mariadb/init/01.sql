@@ -1,3 +1,4 @@
+-- CREATE DATABASE IF NOT EXISTS video;
 CREATE OR REPLACE DATABASE video;
 
 USE video;
@@ -60,11 +61,14 @@ CREATE TABLE IF NOT EXISTS videos (
 CREATE TABLE IF NOT EXISTS files(
     id INT AUTO_INCREMENT PRIMARY KEY,
     file_name VARCHAR(200) NOT NULL,
-    hashcode VARCHAR(200),
+    hashcode VARCHAR(200) NOT NULL,
+    file_type ENUM('video', 'season', 'serie') NOT NULL,
     video_link INT,
     FOREIGN KEY(video_link) REFERENCES videos (id) ON UPDATE CASCADE,
     serie_link INT,
     FOREIGN KEY(serie_link) REFERENCES series (id) ON UPDATE CASCADE,
+    season_link INT,
+    FOREIGN KEY(season_link) REFERENCES seasons (id) ON UPDATE CASCADE,
     CONSTRAINT unique_file_name UNIQUE (file_name),
     CONSTRAINT unique_hashcode UNIQUE (hashcode)
 );
