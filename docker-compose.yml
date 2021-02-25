@@ -17,18 +17,18 @@ services:
     networks:
       - backend
 
-  apache:
-    depends_on: 
-      - mariadb
-    build: apache/.
-    volumes: 
-      - ./apache/public-html:/usr/local/apache2/htdocs
-      - /mnt/e/Media/Video/:/usr/local/apache2/htdocs/media
-    ports:
-      - "8080:80"
-    restart: always
-    networks:
-      - backend
+  # apache:
+  #   depends_on: 
+  #     - mariadb
+  #   build: apache/.
+  #   volumes: 
+  #     - ./apache/public-html:/usr/local/apache2/htdocs
+  #     - /mnt/e/Media/Video/:/usr/local/apache2/htdocs/media
+  #   ports:
+  #     - "8080:80"
+  #   restart: always
+  #   networks:
+  #     - backend
 
   python:
     depends_on: 
@@ -44,17 +44,27 @@ services:
     environment:
       PYTHONUNBUFFERED: 0
 
-  scriptjs:
-    depends_on:
-      - apache
-    build: scriptjs/.
-    volumes: 
-      - ./scriptjs/node_modules:/usr/local/apache2/htdocs
-    ports:
-      - "8090:90"
-    restart: always
+  daemon:
+    depends_on: 
+      - mariadb
+    build: daemon/.
+    volumes:
+      - ./python:/usr/src/app
+      - /mnt/e/Media/Video/:/usr/src/app/media
     networks:
       - backend
+
+  # scriptjs:
+  #   depends_on:
+  #     - apache
+  #   build: scriptjs/.
+  #   volumes: 
+  #     - ./scriptjs/node_modules:/usr/local/apache2/htdocs
+  #   ports:
+  #     - "8090:90"
+  #   restart: always
+  #   networks:
+  #     - backend
 
 networks:
   backend:
