@@ -17,18 +17,18 @@ services:
     networks:
       - backend
 
-  # apache:
-  #   depends_on: 
-  #     - mariadb
-  #   build: apache/.
-  #   volumes: 
-  #     - ./apache/public-html:/usr/local/apache2/htdocs
-  #     - /mnt/e/Media/Video/:/usr/local/apache2/htdocs/media
-  #   ports:
-  #     - "8080:80"
-  #   restart: always
-  #   networks:
-  #     - backend
+  apache:
+    depends_on: 
+      - mariadb
+    build: apache/.
+    volumes: 
+      - ./apache/public-html:/usr/local/apache2/htdocs
+      - /mnt/e/Media/Video/:/usr/local/apache2/htdocs/media
+    ports:
+      - "8080:80"
+    restart: always
+    networks:
+      - backend
 
   python:
     depends_on: 

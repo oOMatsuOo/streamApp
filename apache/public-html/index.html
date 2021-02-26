@@ -1,0 +1,60 @@
+<head data-cast-api-enabled="true">
+    <link href="node_modules/video.js/dist/video-js.css" rel="stylesheet" />
+    <link href="node_modules/videojs-chromecast/dist/videojs-chromecast.css" rel="stylesheet" />
+  
+    <script src="http://www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
+    <!-- <script src="node_modules/video.js/dist/video.min.js"></script>
+    <script src="node_modules/videojs-chromecast/dist/videojs-chromecast.js"></script> -->
+  
+    <script src="mariadb_scriptjs_1:8090/node_modules/video.js/dist/video.min.js"></script>
+    <script src="mariadb_videojs_1:8090/node_modules/videojs-chromecast/dist/videojs-chromecast.js"></script>
+  
+  </head>
+  
+  <body>
+  
+    <p><h1>Hello</h1></p>
+    <video controls>
+    
+        <!-- <source src="/media/Film/Fantasy/Tolkien/Le\ Seigneur\ des\ anneaux/test.webm"
+                type="video/webm"> -->
+    
+        <source src="Media/video.mp4"
+                type="video/mp4">
+    
+        Sorry, your browser doesn't support embedded videos.
+    </video>
+    <video
+      id="my-video"
+      class="video-js"
+      controls
+      preload="auto"
+      width="640"
+      height="264"
+      poster="MY_VIDEO_POSTER.jpg"
+      data-setup="{}"
+    >
+      <source src="Media/video.mp4" type="video/mp4" />
+      <p class="vjs-no-js">
+        To view this video please enable JavaScript, and consider upgrading to a
+        web browser that
+        <a href="https://videojs.com/html5-video-support/" target="_blank"
+          >supports HTML5 video</a
+        >
+      </p>
+    </video>
+  
+    <script>
+      var player = videojs('video',{
+        chromecast:{
+          appId:'APP-ID',
+          metadata:{
+            title:'Title display on tech wrapper',
+            subtitle:'Synopsis display on tech wrapper',
+          }
+        }
+      });
+    </script>
+        
+  </body>
+  
