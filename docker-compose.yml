@@ -54,17 +54,17 @@ services:
     networks:
       - backend
 
-  # scriptjs:
-  #   depends_on:
-  #     - apache
-  #   build: scriptjs/.
-  #   volumes: 
-  #     - ./scriptjs/node_modules:/usr/local/apache2/htdocs
-  #   ports:
-  #     - "8090:90"
-  #   restart: always
-  #   networks:
-  #     - backend
+  scriptjs:
+    depends_on:
+      - apache
+    build: scriptjs/.
+    volumes: 
+      - ./scriptjs/node_modules:/usr/local/apache2/htdocs
+    ports:
+      - "8090:90"
+    restart: always
+    networks:
+      - backend
 
 networks:
   backend:
