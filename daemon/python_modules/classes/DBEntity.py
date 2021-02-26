@@ -1,5 +1,8 @@
 import mariadb
 
+from python_modules.classes.video import Video
+from python_modules.classes.file import File
+
 class dbConnect:
 
     # Try to init the connection with the DB
@@ -27,7 +30,7 @@ class dbConnect:
 
 
     def commit_db(self):
-        self.conn.commit()
+        self.connection.commit()
 
 
     def close_connection(self):
@@ -90,8 +93,8 @@ class EpisodeFileEntity:
     def insert_episode_file(self, episode):
         cur = self.conn.cursor()
 
-        query = "INSERT INTO files (file_name, hashcode, video_link, file_type) VALUES (?, ?, ?, ?)"
-        cur.execute(query,(episode.name, episode.hashcode, episode.link, 'video'))
+        query = "INSERT INTO files (file_name, hashcode, video_link, season_file_link, file_type) VALUES (?, ?, ?, ?, ?)"
+        cur.execute(query,(episode.name, episode.hashcode, episode.link, episode.second_link, 'video'))
 
         cur.close()
 
@@ -137,8 +140,8 @@ class SeasonFileEntity:
     def insert_season_file(self, season):
         cur = self.conn.cursor()
 
-        query = "INSERT INTO files (file_name, hashcode, file_type) VALUES (?, ?, ?)"
-        cur.execute(query,(season.name, season.hashcode, 'season'))
+        query = "INSERT INTO files (file_name, hashcode, serie_file_link, file_type) VALUES (?, ?, ?, ?)"
+        cur.execute(query,(season.name, season.hashcode, season.link, 'season'))
 
         cur.close()
 
@@ -157,6 +160,18 @@ class SeasonFileEntity:
         return False
 
 
+    def get_season_id(self, season):
+        cur = self.conn.cursor()
+
+        query = "SELECT id FROM files WHERE hashcode=?"
+        cur.execute(query,(season.hashcode,))
+        season_id = cur.fetchone()[0]
+
+        cur.close()
+
+        return season_id
+
+
 class SerieFileEntity:
 
     def __init__(self, conn):
@@ -166,7 +181,7 @@ class SerieFileEntity:
     def insert_serie_file(self, serie):
         cur = self.conn.cursor()
 
-        query = "INSERT INTO files (file_name, hashcode, file_type) VALUES (?, ?, ?)"
+        query = "INSERT INTO files (file_name, hashcode, file_type) VALUES (?, ?, ?);"
         cur.execute(query,(serie.name, serie.hashcode, 'serie'))
 
         cur.close()
@@ -179,6 +194,7 @@ class SerieFileEntity:
         cur.execute(query,(serie.hashcode,))
 
         response = cur.fetchall()
+        cur.close()
 
         if response:
             return True
@@ -186,3 +202,13 @@ class SerieFileEntity:
         return False
 
 
+    def get_serie_id(self, serie):
+        cur = self.conn.cursor()
+
+        query = "SELECT id FROM files WHERE hashcode=?"
+        cur.execute(query,(serie.hashcode,))
+        serie_id = cur.fetchone()[0]
+
+        cur.close()
+
+        return serie_id

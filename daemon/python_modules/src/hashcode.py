@@ -1,5 +1,6 @@
 import random
 import string
+import os
 from tinytag import TinyTag
 from checksumdir import dirhash
 from hashlib import sha1
@@ -15,8 +16,11 @@ def get_file_hashcode(path):
 
 def get_dir_hashcode(path):
     check_and_create_random_ID_file(path)
-    hashcode = dirhash(path, 'sha1', match=["*.txt"])
-    return hashcode
+    ID_path = os.path.join(path, "ID.txt")
+    opened_ID_file = open(ID_path, "r", encoding='utf-8')
+    read_file = opened_ID_file.read()
+    hashcode = sha1(str(read_file).encode('utf-8'))
+    return hashcode.hexdigest()
 
 
 def check_and_create_random_ID_file(path):

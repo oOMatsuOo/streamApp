@@ -1,4 +1,7 @@
 import os
+from tinytag import TinyTag
+import time
+import mariadb
 
 from python_modules.classes.DBEntity import dbConnect, MovieFileEntity, MovieVideoEntity, SerieFileEntity, SeasonFileEntity, EpisodeFileEntity, EpisodeVideoEntity
 from python_modules.classes.video import Video
@@ -29,19 +32,25 @@ def update_serie(db_connection):
         serie_hashcode = get_dir_hashcode(full_path)
 
         serie_file = File(serie, serie_hashcode)
-        print(serie_file)
 
         if not serie_entity.serie_file_exists_by_hashcode(serie_file) :
-            serie_entity.insert_serie_file(serie_file)
+            print("Add Serie : " + str(serie))
+            try:
+                serie_entity.insert_serie_file(serie_file)
+            except mariadb.IntegrityError as e:
+                print(f"Error adding serie to MariaDB Plateform: {e}")
+                print("Serie : " + str(serie_file))
 
             db_connection.commit_db()
+        
+        serie_id = serie_entity.get_serie_id(serie_file)
 
-        update_season(db_connection, full_path)
+        update_season(db_connection, full_path, serie_id)
 
     return 
 
 
-def update_season(db_connection, serie_path):
+def update_season(db_connection, serie_path, serie_id):
 
     season_entity = SeasonFileEntity(db_connection.connection)
 
@@ -52,17 +61,24 @@ def update_season(db_connection, serie_path):
         season_hashcode = get_dir_hashcode(full_path)
 
         season_file = File(season, season_hashcode)
+        season_file.set_link(serie_id)
         
         if not season_entity.season_file_exists_by_hashcode(season_file):
-            season_entity.insert_season_file(season_file)
-        
+            print("Add season : " + str(season))
+            try:
+                season_entity.insert_season_file(season_file)
+            except mariadb.IntegrityError as e:
+                print(f"Error adding season to MariaDB Plateform: {e}")
+                print("Season : " + str(season_file))
+            
             db_connection.commit_db()
 
+        season_id = season_entity.get_season_id(season_file)
 
-        update_episode(db_connection, full_path)
+        update_episode(db_connection, full_path, season_id)
 
 
-def update_episode(db_connection, season_path):
+def update_episode(db_connection, season_path, season_id):
 
     episode_file_entity     = EpisodeFileEntity(db_connection.connection)
     episode_video_entity    = EpisodeVideoEntity(db_connection.connection)
@@ -73,17 +89,27 @@ def update_episode(db_connection, season_path):
         full_path = find_file(episode, season_path)
         episode_hashcode = get_file_hashcode(full_path)
         episode_file = File(episode, episode_hashcode)
+        episode_file.set_second_link(season_id)
         
         if not episode_file_entity.episode_file_exists_by_hashcode(episode_file) :
+            print("Add episode : " + str(episode))
             episode_name = get_file_name(episode)
             episode_duration = get_duration(full_path)
             episode_video = Video(episode_name, episode_duration)
 
-            episode_video_id = episode_video_entity.insert_episode_video(episode_video)
+            try:
+                episode_video_id = episode_video_entity.insert_episode_video(episode_video)
+            except mariadb.IntegrityError as e:
+                print(f"Error adding episode video to MariaDB Plateform: {e}")
+                print("Episode video : " + str(episode_file))
 
-            episode_file.set_link(episode_video_id)
+            try:
+                episode_file.set_link(episode_video_id)
 
-            episode_file_entity.insert_episode_file(episode_file)
+                episode_file_entity.insert_episode_file(episode_file)
+            except mariadb.IntegrityError as e:
+                print(f"Error adding episode file to MariaDB Plateform: {e}")
+                print("Episode file : " + str(episode_file))
 
             db_connection.commit_db()
 
@@ -100,18 +126,27 @@ def update_movies(db_connection):
         full_path = find_file(movie, path)
         movie_hashcode = get_file_hashcode(full_path)
         movie_file = File(movie, movie_hashcode)
-        print(movie_file)
 
         if not movie_file_entity.movie_file_exists_by_hashcode(movie_file) :
+            print("Add movie : " + str(movie))
             movie_name = get_file_name(movie)
             movie_duration = get_duration(full_path)
             movie_video = Video(movie_name, movie_duration)
 
-            movie_video_id = movie_video_entity.insert_movie_video(movie_video)
+            try :
+                movie_video_id = movie_video_entity.insert_movie_video(movie_video)
 
-            movie_file.set_link(movie_video_id)
+            except mariadb.IntegrityError as e:
+                print(f"Error adding movie video to MariaDB Plateform: {e}")
+                print("Movie video : " + str(movie_file))
 
-            movie_file_entity.insert_movie_file(movie_file)
+            try:
+                movie_file.set_link(movie_video_id)
+                movie_file_entity.insert_movie_file(movie_file)
+
+            except mariadb.IntegrityError as e:
+                print(f"Error adding movie file to MariaDB Plateform: {e}")
+                print("Movie file : " + str(movie_file))
 
             db_connection.commit_db()
 
@@ -130,7 +165,8 @@ def list_series(path):
 def list_season(path):
     all_season = []
     for season in os.listdir(path):
-        all_season.append(season)
+        if season != "ID.txt":
+            all_season.append(season)
     
     return all_season
 
@@ -139,7 +175,8 @@ def list_episode(path):
     all_episode = []
     for (repertoire, sous_repertoires, fichiers) in os.walk(path):
         for files in fichiers:
-            all_episode.append(files)
+            if files != "ID.txt":
+                all_episode.append(files)
 
     return all_episode
 
@@ -174,7 +211,7 @@ def get_file_name(file):
 
 
 def get_duration(file):
-    video = TinyTag.get(path)
+    video = TinyTag.get(file)
     duration = time.strftime('%H:%M:%S', time.gmtime(video.duration))
     return duration
 
