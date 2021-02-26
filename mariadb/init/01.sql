@@ -69,6 +69,9 @@ CREATE TABLE IF NOT EXISTS files(
     FOREIGN KEY(serie_link) REFERENCES series (id) ON UPDATE CASCADE,
     season_link INT,
     FOREIGN KEY(season_link) REFERENCES seasons (id) ON UPDATE CASCADE,
-    CONSTRAINT unique_file_name UNIQUE (file_name),
+    serie_file_link INT,
+    FOREIGN KEY(serie_file_link) REFERENCES files (id) ON UPDATE CASCADE,
+    season_file_link INT,
+    FOREIGN KEY(season_file_link) REFERENCES files (id) ON UPDATE CASCADE,
     CONSTRAINT unique_hashcode UNIQUE (hashcode)
 );
