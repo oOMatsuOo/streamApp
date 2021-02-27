@@ -8,4 +8,4 @@ class Video:
         name_string = "Name : " + str(self.name) + "\n"
         duration_string = "Duration : " + str(self.duration) + "\n"
 
-        return name_string + video_type_string + duration_string
+        return name_string + duration_string

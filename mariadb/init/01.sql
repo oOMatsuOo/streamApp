@@ -1,5 +1,5 @@
--- CREATE DATABASE IF NOT EXISTS video;
-CREATE OR REPLACE DATABASE video;
+CREATE DATABASE IF NOT EXISTS video;
+-- CREATE OR REPLACE DATABASE video;
 
 USE video;
 
@@ -58,20 +58,31 @@ CREATE TABLE IF NOT EXISTS videos (
 );
 
 
-CREATE TABLE IF NOT EXISTS files(
+CREATE TABLE IF NOT EXISTS directory(
     id INT AUTO_INCREMENT PRIMARY KEY,
-    file_name VARCHAR(200) NOT NULL,
+    dir_name VARCHAR(200) NOT NULL,
     hashcode VARCHAR(200) NOT NULL,
-    file_type ENUM('video', 'season', 'serie') NOT NULL,
-    video_link INT,
-    FOREIGN KEY(video_link) REFERENCES videos (id) ON UPDATE CASCADE,
+    file_type ENUM('season', 'serie') NOT NULL,
     serie_link INT,
     FOREIGN KEY(serie_link) REFERENCES series (id) ON UPDATE CASCADE,
     season_link INT,
     FOREIGN KEY(season_link) REFERENCES seasons (id) ON UPDATE CASCADE,
-    serie_file_link INT,
-    FOREIGN KEY(serie_file_link) REFERENCES files (id) ON UPDATE CASCADE,
-    season_file_link INT,
-    FOREIGN KEY(season_file_link) REFERENCES files (id) ON UPDATE CASCADE,
+    serie_dir_link INT,
+    FOREIGN KEY(serie_dir_link) REFERENCES directory (id) ON UPDATE CASCADE,
     CONSTRAINT unique_hashcode UNIQUE (hashcode)
 );
+
+
+CREATE TABLE IF NOT EXISTS files(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    file_name VARCHAR(200) NOT NULL,
+    hashcode VARCHAR(200) NOT NULL,
+    quality ENUM('4K', '2K', 'FullHD', 'HD', 'SD'),
+    video_link INT,
+    FOREIGN KEY(video_link) REFERENCES videos (id) ON UPDATE CASCADE,
+    season_dir_link INT,
+    FOREIGN KEY(season_dir_link) REFERENCES directory (id) ON UPDATE CASCADE,
+    CONSTRAINT unique_hashcode UNIQUE (hashcode)
+);
+
+

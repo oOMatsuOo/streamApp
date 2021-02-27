@@ -1,14 +1,13 @@
 import random
 import string
 import os
-from tinytag import TinyTag
-from checksumdir import dirhash
+from videoprops import get_video_properties
 from hashlib import sha1
 
 def get_file_hashcode(path):
-    video = TinyTag.get(path)
-    video = video.__dict__
-    video.pop('_filehandler')
+    video = get_video_properties(path)
+    # video = video.__dict__
+    # video.pop('_filehandler')
     video = str(video).encode('utf-8')
     hashcode = sha1(video)
     return hashcode.hexdigest()

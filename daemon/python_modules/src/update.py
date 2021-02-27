@@ -1,5 +1,6 @@
 import os
 from tinytag import TinyTag
+from videoprops import get_video_properties
 import time
 import mariadb
 
@@ -10,28 +11,29 @@ from python_modules.src.hashcode import get_dir_hashcode, get_file_hashcode
 
 
 
-def update_all():
+def update_all(path):
     db_connection = dbConnect()
 
-    update_serie(db_connection)
-    update_movies(db_connection)
+    serie_path = os.path.join(path, 'Series')
+    movie_path = os.path.join(path, 'Film')
+
+    update_serie(db_connection, serie_path)
+    update_movies(db_connection, movie_path)
 
     db_connection.close_connection()
 
 
-def update_serie(db_connection):
+def update_serie(db_connection, path):
 
     serie_entity = SerieFileEntity(db_connection.connection)
 
-
-    path = 'media/Series'
     all_series = list_series(path)
 
     for serie in all_series:
         full_path = find_dir(serie, path)
         serie_hashcode = get_dir_hashcode(full_path)
 
-        serie_file = File(serie, serie_hashcode)
+        serie_file = File(serie, serie_hashcode, 'null')
 
         if not serie_entity.serie_file_exists_by_hashcode(serie_file) :
             print("Add Serie : " + str(serie))
@@ -60,7 +62,7 @@ def update_season(db_connection, serie_path, serie_id):
         full_path = find_dir(season, serie_path)
         season_hashcode = get_dir_hashcode(full_path)
 
-        season_file = File(season, season_hashcode)
+        season_file = File(season, season_hashcode, 'null')
         season_file.set_link(serie_id)
         
         if not season_entity.season_file_exists_by_hashcode(season_file):
@@ -88,7 +90,8 @@ def update_episode(db_connection, season_path, season_id):
     for episode in all_episodes:
         full_path = find_file(episode, season_path)
         episode_hashcode = get_file_hashcode(full_path)
-        episode_file = File(episode, episode_hashcode)
+        episode_quality = get_quality(full_path)
+        episode_file = File(episode, episode_hashcode, episode_quality)
         episode_file.set_second_link(season_id)
         
         if not episode_file_entity.episode_file_exists_by_hashcode(episode_file) :
@@ -97,61 +100,72 @@ def update_episode(db_connection, season_path, season_id):
             episode_duration = get_duration(full_path)
             episode_video = Video(episode_name, episode_duration)
 
-            try:
-                episode_video_id = episode_video_entity.insert_episode_video(episode_video)
-            except mariadb.IntegrityError as e:
-                print(f"Error adding episode video to MariaDB Plateform: {e}")
-                print("Episode video : " + str(episode_file))
+            if not episode_video_entity.episode_video_exists(episode_video, season_id):
+                try:
+                    episode_video_id = episode_video_entity.insert_episode_video(episode_video)
+                except Exception as e:
+                    print(f"Error adding episode video to MariaDB Plateform: {e}")
+                    print("Episode video : " + str(episode_file))
+            else:
+                episode_video_id = episode_video_entity.get_episode_video_id(episode_video, season_id)
 
             try:
                 episode_file.set_link(episode_video_id)
 
                 episode_file_entity.insert_episode_file(episode_file)
-            except mariadb.IntegrityError as e:
+            except Exception as e:
                 print(f"Error adding episode file to MariaDB Plateform: {e}")
                 print("Episode file : " + str(episode_file))
 
             db_connection.commit_db()
 
 
-def update_movies(db_connection):
+def update_movies(db_connection, path):
 
     movie_file_entity       = MovieFileEntity(db_connection.connection)
-    movie_video_entity      = MovieVideoEntity(db_connection.connection)
 
-    path = 'media/Film'
     all_movies = list_movies(path)
 
     for movie in all_movies:
         full_path = find_file(movie, path)
         movie_hashcode = get_file_hashcode(full_path)
-        movie_file = File(movie, movie_hashcode)
+        movie_quality = get_quality(full_path)
+        movie_file = File(movie, movie_hashcode, movie_quality)
 
         if not movie_file_entity.movie_file_exists_by_hashcode(movie_file) :
-            print("Add movie : " + str(movie))
-            movie_name = get_file_name(movie)
-            movie_duration = get_duration(full_path)
-            movie_video = Video(movie_name, movie_duration)
-
-            try :
-                movie_video_id = movie_video_entity.insert_movie_video(movie_video)
-
-            except mariadb.IntegrityError as e:
-                print(f"Error adding movie video to MariaDB Plateform: {e}")
-                print("Movie video : " + str(movie_file))
-
-            try:
-                movie_file.set_link(movie_video_id)
-                movie_file_entity.insert_movie_file(movie_file)
-
-            except mariadb.IntegrityError as e:
-                print(f"Error adding movie file to MariaDB Plateform: {e}")
-                print("Movie file : " + str(movie_file))
-
-            db_connection.commit_db()
+            add_movie(db_connection, movie, full_path, movie_file, movie_file_entity)
 
 
     return 
+
+
+def add_movie(db_connection, movie, full_path, movie_file, movie_file_entity):
+    
+    movie_video_entity      = MovieVideoEntity(db_connection.connection)
+
+    print("Add movie : " + str(movie))
+    movie_name = get_file_name(movie)
+    movie_duration = get_duration(full_path)
+        
+    movie_video = Video(movie_name, movie_duration)
+
+    if not movie_video_entity.movie_video_exists(movie_video):
+        try :
+            movie_video_id = movie_video_entity.insert_movie_video(movie_video)
+        except mariadb.IntegrityError as e:
+            print(f"Error adding movie video to MariaDB Plateform: {e}")
+            print("Movie video : " + str(movie_file))
+    else :
+        movie_video_id = movie_video_entity.get_movie_video_id(movie_video)
+
+    try:
+        movie_file.set_link(movie_video_id)
+        movie_file_entity.insert_movie_file(movie_file)
+    except mariadb.IntegrityError as e:
+        print(f"Error adding movie file to MariaDB Plateform: {e}")
+        print("Movie file : " + str(movie_file))
+    
+    db_connection.commit_db()
 
 
 def list_series(path):
@@ -207,7 +221,9 @@ def list_movies(path):
 
 
 def get_file_name(file):
-    return os.path.splitext(file)[0]
+    file_name = os.path.splitext(file)[0]
+    file_name = file_name.split('[')[0]
+    return file_name
 
 
 def get_duration(file):
@@ -215,3 +231,19 @@ def get_duration(file):
     duration = time.strftime('%H:%M:%S', time.gmtime(video.duration))
     return duration
 
+
+def get_quality(file):
+    video = get_video_properties(file)
+
+    if video['width'] >=3800 :
+        video_quality = "4K"
+    elif video['width'] >= 2000 and video['width'] < 3800:
+        video_quality = "2K"
+    elif video['width'] >= 1700 and video['width'] < 2000:
+        video_quality = "FullHD"
+    elif video['width'] >= 1000 and video['width'] < 1700:
+        video_quality = "HD"
+    elif video['width'] < 1000:
+        video_quality = "SD"
+
+    return video_quality

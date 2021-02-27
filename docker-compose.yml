@@ -4,7 +4,7 @@ services:
   mariadb:
     build: mariadb/.
     volumes:
-      - db_data:/var/lib/mariadb
+      - ./mariadb/data/db_data:/var/lib/mariadb
       - ./mariadb/init:/docker-entrypoint-initdb.d
     restart: always
     ports:
@@ -59,7 +59,7 @@ services:
       - apache
     build: scriptjs/.
     volumes: 
-      - ./scriptjs/node_modules:/usr/local/apache2/htdocs
+      - ./scriptjs:/usr/local/apache2/htdocs
     ports:
       - "8090:90"
     restart: always
